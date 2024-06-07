@@ -7,6 +7,8 @@ public class PlayerControl : MonoBehaviour
 {
     public GameObject cBox;
     public GameObject SmashDownEffect;
+    public GameObject rushEffectL;
+    public GameObject rushEffectR;
     public Transform SmashDownEffctPosition;
     private Quaternion spawnRotation;
 
@@ -23,7 +25,7 @@ public class PlayerControl : MonoBehaviour
 
     public float prepareRushTime;//冲刺蓄力时间
     private float nowTime;//目前蓄力时间
-    private bool isPrepareRush;
+    public bool isPrepareRush;//是否准备下砸
     private bool canRush=true;//是否能冲刺
     private float rushTime = 0.2f;//冲刺时间
     private float rushCoolTime = 1f;//冲刺冷却时间
@@ -31,6 +33,7 @@ public class PlayerControl : MonoBehaviour
     public float rushSpeed=24f;//冲刺速度
 
     private bool canSmashDown;//能否下砸
+    public bool isPrepareSmashDown;//是否准备下砸
     public bool isSmashingDown;//是否正在下砸
     public float smashDownWaitTime;//蓄力时间
     public float smashDownA;//下砸加速度
@@ -54,17 +57,29 @@ public class PlayerControl : MonoBehaviour
 
     void FixedUpdate()
     {
-
-        if (isRushing || isSmashingDown ||isPrepareRush)
+        //蓄力速度清零
+        if (Input.GetKey(KeyCode.K))
+        {
+            rb.velocity = Vector2.zero;
+            isPrepareRush = true;
+        }
+        if (isRushing || isSmashingDown || isPrepareRush||isPrepareSmashDown||Input.GetKey(KeyCode.K))
         {
             return;
         }
-        Transform();
         Jump();
+        Transform();
     }
 
     private void Update()
     {
+        //蓄力速度清零
+        if (Input.GetKey(KeyCode.K))
+        {
+            rb.velocity = Vector2.zero;
+            isPrepareRush = true;
+        }
+
         isGround = Physics2D.OverlapCircle(cBox.transform.position, 0.3f, groundLayer)||
         Physics2D.OverlapCircle(cBox.transform.position, 0.3f, boxLayer);
         if (isGround)
@@ -75,7 +90,7 @@ public class PlayerControl : MonoBehaviour
         }
         sr.flipX = direction > 0;
         RushCheck();
-        if (isRushing||isSmashingDown||isPrepareRush)
+        if (isRushing || isSmashingDown || isPrepareRush || isPrepareSmashDown || Input.GetKey(KeyCode.K))
         {
             return;
         }
@@ -125,9 +140,12 @@ public class PlayerControl : MonoBehaviour
         {
             rb.velocity += Vector2.up * Physics2D.gravity.y * (lowMultiplier - 1) * Time.deltaTime;
         }
+        if (Input.GetKey(KeyCode.K))
+        {
+            rb.velocity = Vector2.zero;
+        }
     }
 
-    //判断角色是否在地面
     
     //死亡逻辑
     public void Die()
@@ -139,10 +157,12 @@ public class PlayerControl : MonoBehaviour
     private IEnumerator SmashDown()
     {
         canSmashDown = false;
+        isPrepareSmashDown = true;
         rb.velocity = Vector2.zero;
         float origionalGravity = rb.gravityScale;
         rb.gravityScale = 0;
         yield return new WaitForSeconds(smashDownWaitTime);
+        isPrepareSmashDown = false;
         isSmashingDown = true;
         rb.velocity = Vector2.up*(-smashDownSpeed);
         rb.gravityScale = smashDownA;
@@ -182,7 +202,6 @@ public class PlayerControl : MonoBehaviour
         }
         if (Input.GetKeyUp(KeyCode.K))
         {
-            print(1);
             isPrepareRush = false;
             rb.gravityScale = 1;
             if (nowTime >= prepareRushTime)
@@ -199,21 +218,23 @@ public class PlayerControl : MonoBehaviour
     {
         canRush = false;
         isRushing = true;
-        tr.emitting = true;
         float origionalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
         if (direction > 0) 
         {
+            rushEffectR.SetActive(true);
             rb.velocity = Vector2.right * rushSpeed;
         }
         if (direction < 0)
         {
+            rushEffectL.SetActive(true);
             rb.velocity = Vector2.left * rushSpeed;
         }
         yield return new WaitForSeconds(rushTime);
         rb.gravityScale = 1;
         isRushing = false;
-        tr.emitting = false;
+        rushEffectL.SetActive(false);
+        rushEffectR.SetActive(false);
         rb.velocity = Vector2.zero;
         yield return new WaitForSeconds(rushCoolTime);
         canRush=true;

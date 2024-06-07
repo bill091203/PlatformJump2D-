@@ -18,5 +18,9 @@ public class PlayerAnimation : MonoBehaviour
     {
         animator.SetBool("isFalling", player.isFalling);
         animator.SetBool("isJumping", player.isJumping);
+        animator.SetBool("isPrepareRush", player.isPrepareRush);
+        animator.SetBool("isRushing", player.isRushing);
+        animator.SetBool("isSmashingDown", player.isSmashingDown);
+        animator.SetBool("isPrepareSmashDown", player.isPrepareSmashDown);
     }
 }
